@@ -6,6 +6,10 @@ configured on `tanzu` CLI to your Bash/Zsh prompt strings (i.e. the `$PS1`).
 
 Inspired by `kube-ps1`.
 
+## Prerequisites
+
+These scripts utilize `yq`, whose installation instructions can be found [here](https://github.com/mikefarah/yq/#install)
+
 ## Installing
 
 ### From Source
