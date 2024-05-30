@@ -33,7 +33,7 @@ plugins=(kube-ps1 tanzu-ps1)
 Add to the PROMPT variable at the bottom. Here is an example of using both kube-ps1 and tanzu-ps1 together:
 
 ```sh
-PROMPT='$(TANZU_PS1) $(tanzu_ps1) %F{cyan}%1~%f %# '
+PROMPT='$(kube_ps1) $(tanzu_ps1) %F{cyan}%1~%f %# '
 ```
 
 ## Requirements
