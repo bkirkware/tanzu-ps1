@@ -30,6 +30,7 @@ TANZU_PS1_SYMBOL_DEFAULT=${TANZU_PS1_SYMBOL_DEFAULT:-$'TZ'}
 TANZU_PS1_SYMBOL_PADDING="${TANZU_PS1_SYMBOL_PADDING:-false}"
 TANZU_PS1_SYMBOL_USE_IMG="${TANZU_PS1_SYMBOL_USE_IMG:-false}"
 TANZU_PS1_SPACE_ENABLE="${TANZU_PS1_SPACE_ENABLE:-true}"
+TANZU_PS1_CLUSTERGROUP_ENABLE="${TANZU_PS1_CLUSTERGROUP_ENABLE:-true}"
 TANZU_PS1_PROJECT_ENABLE="${TANZU_PS1_PROJECT_ENABLE:-true}"
 TANZU_PS1_PREFIX="${TANZU_PS1_PREFIX-(}"
 TANZU_PS1_SEPARATOR="${TANZU_PS1_SEPARATOR-|}"
@@ -39,6 +40,7 @@ TANZU_PS1_SUFFIX="${TANZU_PS1_SUFFIX-)}"
 TANZU_PS1_SYMBOL_COLOR="${TANZU_PS1_SYMBOL_COLOR-green}"
 TANZU_PS1_PROJECT_COLOR="${TANZU_PS1_PROJECT_COLOR-red}"
 TANZU_PS1_SPACE_COLOR="${TANZU_PS1_SPACE_COLOR-cyan}"
+TANZU_PS1_CLUSTERGROUP_COLOR="${TANZU_PS1_SPACE_COLOR-cyan}"
 TANZU_PS1_BG_COLOR="${TANZU_PS1_BG_COLOR}"
 
 TANZU_PS1_TANZUCONFIG_CACHE="${TANZUCONFIG}"
@@ -233,7 +235,7 @@ _TANZU_PS1_update_cache() {
   if [[ "${TANZUCONFIG}" != "${TANZU_PS1_TANZUCONFIG_CACHE}" ]]; then
     # User changed TANZUCONFIG; unconditionally refetch.
     TANZU_PS1_TANZUCONFIG_CACHE=${TANZUCONFIG}
-    _TANZU_PS1_get_project_space
+    _TANZU_PS1_get_project_space_clustergroup
     return
   fi
 
@@ -243,7 +245,7 @@ _TANZU_PS1_update_cache() {
   for conf in $(_TANZU_PS1_split : "${TANZUCONFIG:-${HOME}/.config/tanzu/config-ng.yaml}"); do
     [[ -r "${conf}" ]] || continue
     if _TANZU_PS1_file_newer_than "${conf}" "${TANZU_PS1_LAST_TIME}"; then
-      _TANZU_PS1_get_project_space
+      _TANZU_PS1_get_project_space_clustergroup
       return
     fi
   done
@@ -268,8 +270,8 @@ _TANZU_PS1_get_space() {
   if [[ "${TANZU_PS1_SPACE_ENABLE}" == true ]]; then
     context_info=$(yq eval ".contexts[] | select(.name == \"$(yq eval '.currentContext.tanzu' "${TANZUCONFIG:-${HOME}/.config/tanzu/config-ng.yaml}")\") | .additionalMetadata" "${TANZUCONFIG:-${HOME}/.config/tanzu/config-ng.yaml}")
     TANZU_PS1_SPACE="$(echo "$context_info" | yq eval '.tanzuSpaceName' -)"
-    # Set namespace to 'default' if it is not defined
-    TANZU_PS1_SPACE="${TANZU_PS1_SPACE:-default}"
+    # Set namespace to 'N/A' if it is not defined
+    TANZU_PS1_SPACE="${TANZU_PS1_SPACE:-N/A}"
 
     if [[ ! -z "${TANZU_PS1_SPACE_FUNCTION}" ]]; then
         TANZU_PS1_SPACE=$($TANZU_PS1_SPACE_FUNCTION $TANZU_PS1_SPACE)
@@ -277,7 +279,20 @@ _TANZU_PS1_get_space() {
   fi
 }
 
-_TANZU_PS1_get_project_space() {
+_TANZU_PS1_get_clustergroup() {
+  if [[ "${TANZU_PS1_CLUSTERGROUP_ENABLE}" == true ]]; then
+    context_info=$(yq eval ".contexts[] | select(.name == \"$(yq eval '.currentContext.tanzu' "${TANZUCONFIG:-${HOME}/.config/tanzu/config-ng.yaml}")\") | .additionalMetadata" "${TANZUCONFIG:-${HOME}/.config/tanzu/config-ng.yaml}")
+    TANZU_PS1_CLUSTERGROUP="$(echo "$context_info" | yq eval '.tanzuClusterGroupName' -)"
+    # Set namespace to 'N/A' if it is not defined
+    TANZU_PS1_CLUSTERGROUP="${TANZU_PS1_CLUSTERGROUP:-N/A}"
+
+    if [[ ! -z "${TANZU_PS1_CLUSTERGROUP_FUNCTION}" ]]; then
+        TANZU_PS1_CLUSTERGROUP=$($TANZU_PS1_CLUSTERGROUP_FUNCTION $TANZU_PS1_CLUSTERGROUP)
+    fi
+  fi
+}
+
+_TANZU_PS1_get_project_space_clustergroup() {
   # Set the command time
   if [[ "${TANZU_PS1_SHELL}" == "bash" ]]; then
     if ((BASH_VERSINFO[0] >= 4 && BASH_VERSINFO[1] >= 2)); then
@@ -291,6 +306,7 @@ _TANZU_PS1_get_project_space() {
 
   _TANZU_PS1_get_project
   _TANZU_PS1_get_space
+  _TANZU_PS1_get_clustergroup
 }
 
 # Set tanzu-ps1 shell defaults
@@ -376,17 +392,29 @@ tanzu_ps1() {
     TANZU_PS1+="${TANZU_PS1_SEPARATOR}"
   fi
 
-  # Context
+  # Project
   if [[ "${TANZU_PS1_PROJECT_ENABLE}" == true ]]; then
     TANZU_PS1+="$(_TANZU_PS1_color_fg $TANZU_PS1_PROJECT_COLOR)${TANZU_PS1_PROJECT}${TANZU_PS1_RESET_COLOR}"
   fi
 
-  # Namespace
+  # Space
   if [[ "${TANZU_PS1_SPACE_ENABLE}" == true ]]; then
-    if [[ -n "${TANZU_PS1_DIVIDER}" ]] && [[ "${TANZU_PS1_PROJECT_ENABLE}" == true ]]; then
-      TANZU_PS1+="${TANZU_PS1_DIVIDER}"
+    if [[ "${TANZU_PS1_SPACE}" != "N/A" ]]; then
+      if [[ -n "${TANZU_PS1_DIVIDER}" ]] && [[ "${TANZU_PS1_PROJECT_ENABLE}" == true ]]; then
+        TANZU_PS1+="${TANZU_PS1_DIVIDER}"
+      fi
+      TANZU_PS1+="$(_TANZU_PS1_color_fg ${TANZU_PS1_SPACE_COLOR})${TANZU_PS1_SPACE}${TANZU_PS1_RESET_COLOR}"
     fi
-    TANZU_PS1+="$(_TANZU_PS1_color_fg ${TANZU_PS1_SPACE_COLOR})${TANZU_PS1_SPACE}${TANZU_PS1_RESET_COLOR}"
+  fi
+
+  # ClusterGroup
+  if [[ "${TANZU_PS1_CLUSTERGROUP_ENABLE}" == true ]]; then
+    if [[ "${TANZU_PS1_CLUSTERGROUP}" != "N/A" ]]; then
+      if [[ -n "${TANZU_PS1_DIVIDER}" ]] && [[ "${TANZU_PS1_PROJECT_ENABLE}" == true ]]; then
+        TANZU_PS1+="${TANZU_PS1_DIVIDER}"
+      fi
+      TANZU_PS1+="$(_TANZU_PS1_color_fg ${TANZU_PS1_CLUSTERGROUP_COLOR})${TANZU_PS1_CLUSTERGROUP}${TANZU_PS1_RESET_COLOR}"
+    fi
   fi
 
   # Suffix

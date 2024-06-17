@@ -52,7 +52,7 @@ Official installation instructions and binaries are available:
 The default prompt layout is:
 
 ```
-(<symbol>|<project>:<space>)
+(<symbol>|<project>:<space-or-clustergroup>)
 ```
 
 If the current-context is not set, tanzu-ps1 will return the following:
@@ -86,6 +86,7 @@ the following environment variables:
 | :------- | :-----: | ------- |
 | `TANZU_PS1_BINARY` | `tanzu` | Default Tanzu CLI binary |
 | `TANZU_PS1_SPACE_ENABLE` | `true` | Display the namespace. If set to `false`, this will also disable `TANZU_PS1_DIVIDER` |
+| `TANZU_PS1_CLUSTERGROUP_ENABLE` | `true` | Display the namespace. If set to `false`, this will also disable `TANZU_PS1_DIVIDER` |
 | `TANZU_PS1_PREFIX` | `(` | Prompt opening character  |
 | `TANZU_PS1_SYMBOL_ENABLE` | `true ` | Display the prompt Symbol. If set to `false`, this will also disable `TANZU_PS1_SEPARATOR` |
 | `TANZU_PS1_SYMBOL_PADDING` | `false` | Adds a space (padding) after the symbol to prevent clobbering prompt characters |
@@ -96,6 +97,7 @@ the following environment variables:
 | `TANZU_PS1_SUFFIX` | `)` | Prompt closing character |
 | `TANZU_PS1_PROJECT_FUNCTION` | No default, must be user supplied | Function to customize how project is displayed |
 | `TANZU_PS1_SPACE_FUNCTION` | No default, must be user supplied | Function to customize how space is displayed |
+| `TANZU_PS1_CLUSTERGROUP_FUNCTION` | No default, must be user supplied | Function to customize how space is displayed |
 | `TANZU_PS1_TANZUCONFIG_SYMLINK` | `false` | Treat `TANZUCONFIG` and `~/.config/tanzu/config-ng.yaml` files as symbolic links |
 
 To disable a feature, set it to an empty string:
